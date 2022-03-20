@@ -80,6 +80,7 @@ public class Estimator
         double gainedValuePerCycle;
         double bridgeFees,allFees;
 
+        int numberOfTimesSoldTokens=0;
         double lastUSTStakedValueBeforePuncture = lastUSTStakedValue;
         while(tmpNumberOf20min > 0)
         {
@@ -116,7 +117,7 @@ public class Estimator
             }
 
             //titano staking earning calculation && Swap back to ust when it is possible
-            gainedValuePerCycle = Constants.RATE_GAIN_TITANO_APY * lastTitanoStakedValue/(100*365*24*3);
+            gainedValuePerCycle = Constants.RATE_GAIN_TITANO_APY * lastTitanoStakedValue/(100*365*24*3*100);
             lastTitanoStakedValue = lastTitanoStakedValue + gainedValuePerCycle;
             lastTitanoStakedValueBeforePuncture = lastTitanoStakedValueBeforePuncture + gainedValuePerCycle/100;
 
@@ -129,14 +130,15 @@ public class Estimator
             if(tmpValueInUSTToBeDistributed > Constants.MIN_VALUE_CAN_BE_SWAPPED_FROM_TITANO_OR_LIBERO_TO_UST_IN_USD)
             {
                 lastTitanoStakedValue = lastTitanoStakedValue - tmpValueInTokenToBeDistributed - allFees;
-                lastTitanoStakedValueBeforePuncture = lastTitanoStakedValueBeforePuncture - tmpValueInTokenToBeDistributed - allFees;
+                lastTitanoStakedValueBeforePuncture = lastTitanoStakedValue;
 
                 lastUSTStakedValue = lastUSTStakedValue + tmpValueInUSTToBeDistributed;
                 lastUSTStakedValueBeforePuncture = lastUSTStakedValueBeforePuncture + tmpValueInUSTToBeDistributed;
+                numberOfTimesSoldTokens++;
             }
 
             //libero staking earning calculation && Swap Back when it is possible
-            gainedValuePerCycle = Constants.RATE_GAIN_Libero_APY * lastTitanoStakedValue/(100*365*24*3);
+            gainedValuePerCycle = Constants.RATE_GAIN_Libero_APY * lastTitanoStakedValue/(100*365*24*3*100);
             lastLiberoStakedValue = lastLiberoStakedValue + gainedValuePerCycle;
             lastLiberoStakedValueBeforePuncture = lastLiberoStakedValueBeforePuncture + gainedValuePerCycle/100;
 
@@ -149,10 +151,11 @@ public class Estimator
             if(tmpValueInUSTToBeDistributed > Constants.MIN_VALUE_CAN_BE_SWAPPED_FROM_TITANO_OR_LIBERO_TO_UST_IN_USD)
             {
                 lastLiberoStakedValue = lastLiberoStakedValue - tmpValueInTokenToBeDistributed - allFees;
-                lastLiberoStakedValueBeforePuncture = lastLiberoStakedValueBeforePuncture - tmpValueInTokenToBeDistributed - allFees;
+                lastLiberoStakedValueBeforePuncture = lastLiberoStakedValue;
 
                 lastUSTStakedValue = lastUSTStakedValue + tmpValueInUSTToBeDistributed;
                 lastUSTStakedValueBeforePuncture = lastUSTStakedValueBeforePuncture + tmpValueInUSTToBeDistributed;
+                numberOfTimesSoldTokens++;
             }
 
 
@@ -167,9 +170,15 @@ public class Estimator
 
             tmpNumberOf20min--;
         }
-        resultValueInUSD = lastUSTStakedValue +
-                   lastLiberoStakedValue * sellingLiberoValue - Constants.RATE_LIBERO_SELL * lastLiberoStakedValue * sellingLiberoValue/100
-                + lastTitanoStakedValue * sellingTITANOValue - Constants.RATE_TITANO_RATE_SELL * lastTitanoStakedValue * sellingTITANOValue;
+        System.out.println("Number of UST: "+ lastUSTStakedValue);
+        System.out.println("Number of TITANO: "+ lastTitanoStakedValue);
+        System.out.println("Number of Libero: "+ lastLiberoStakedValue);
+        System.out.println("Number of times tokens sold: "+numberOfTimesSoldTokens);
+        resultValueInUSD = lastUSTStakedValue + lastTitanoStakedValue * sellingTITANOValue - Constants.RATE_TITANO_RATE_SELL * lastTitanoStakedValue * sellingTITANOValue/100
+        +lastLiberoStakedValue * sellingLiberoValue - Constants.RATE_LIBERO_SELL * lastLiberoStakedValue * sellingLiberoValue/100;
+//        +
+//                   lastLiberoStakedValue * sellingLiberoValue - Constants.RATE_LIBERO_SELL * lastLiberoStakedValue * sellingLiberoValue/100
+//                + lastTitanoStakedValue * sellingTITANOValue - Constants.RATE_TITANO_RATE_SELL * lastTitanoStakedValue * sellingTITANOValue/100;
     }
 
     private void initialization()

@@ -2,6 +2,9 @@ package com;
 
 import org.apache.log4j.Logger;
 
+import static com.Constants.MIN_VALUE_CAN_BE_SWAPPED_FROM_UST_TO_TITANO_AND_LIBERO;
+import static com.Constants.RATE_VARIABLE_BRIDGE_FEE;
+
 public class Estimator
 {
 
@@ -69,17 +72,104 @@ public class Estimator
     {
         int tmpNumberOf20min = numberOfDays * 72;
         double lastUSTStakedValue = initialValueInvestmentInUST - Constants.FIXED_FEE_TRANSACTIONS_UST;
-        double lastTitanoStakedValue;
-        double lastLiberoStakedValue;
-        double tmpValueToBeDistributed;
+        double lastTitanoStakedValue = 0.0;
+        double lastTitanoStakedValueBeforePuncture = 0.0;
+        double lastLiberoStakedValue = 0.0;
+        double lastLiberoStakedValueBeforePuncture = 0.0;
+        double tmpValueToBeDistributedInUSD,tmpValueInTokenToBeDistributed,tmpValueInUSTToBeDistributed;
+        double gainedValuePerCycle;
+        double bridgeFees,allFees;
 
         double lastUSTStakedValueBeforePuncture = lastUSTStakedValue;
-        while(tmpNumberOf20min>0)
+        while(tmpNumberOf20min > 0)
         {
-            lastUSTStakedValue = lastUSTStakedValue + Constants.RATE_GAIN_UST_ANCHOR_APY*lastUSTStakedValue/(100*365*24*3);
-            //if((lastUSTStakedValue-lastUSTStakedValueBeforePuncture)>)
+            //ust staking earnings calculation  && Swap to risky tokens when it is possible
+            gainedValuePerCycle = Constants.RATE_GAIN_UST_ANCHOR_APY * lastUSTStakedValue/(100*365*24*3);
+            lastUSTStakedValue = lastUSTStakedValue + gainedValuePerCycle;
+            lastUSTStakedValueBeforePuncture = lastUSTStakedValueBeforePuncture + gainedValuePerCycle/100;
 
+
+            tmpValueToBeDistributedInUSD = lastUSTStakedValue-lastUSTStakedValueBeforePuncture;
+            tmpValueToBeDistributedInUSD = tmpValueToBeDistributedInUSD - Constants.FIXED_FEE_TRANSACTIONS_UST;
+            bridgeFees = Math.max(Constants.MIN_FIXED_BRIDGE_FEE,tmpValueToBeDistributedInUSD*RATE_VARIABLE_BRIDGE_FEE/100);
+            tmpValueToBeDistributedInUSD = tmpValueToBeDistributedInUSD - bridgeFees;
+            allFees = bridgeFees + Constants.FIXED_FEE_TRANSACTIONS_UST;
+
+            if( tmpValueToBeDistributedInUSD > MIN_VALUE_CAN_BE_SWAPPED_FROM_UST_TO_TITANO_AND_LIBERO)
+            {
+
+                lastUSTStakedValue = lastUSTStakedValue - tmpValueToBeDistributedInUSD -allFees;
+                lastUSTStakedValueBeforePuncture = lastUSTStakedValue;
+
+
+                tmpValueInTokenToBeDistributed = ((tmpValueToBeDistributedInUSD/2) -
+                        Constants.RATE_TITANO_RATE_BUY * (tmpValueToBeDistributedInUSD/2)/100)/averageTITANOBuyingValue;
+                lastTitanoStakedValue = lastTitanoStakedValue + tmpValueInTokenToBeDistributed;
+                lastTitanoStakedValueBeforePuncture = lastTitanoStakedValueBeforePuncture + tmpValueInTokenToBeDistributed;
+
+                tmpValueInTokenToBeDistributed = ((tmpValueToBeDistributedInUSD/2) -
+                        Constants.RATE_LIBERO_BUY * (tmpValueToBeDistributedInUSD/2)/100)/averageLiberoBuyingValue;
+                lastLiberoStakedValue = lastLiberoStakedValue + tmpValueInTokenToBeDistributed;
+                lastLiberoStakedValueBeforePuncture = lastLiberoStakedValueBeforePuncture + tmpValueInTokenToBeDistributed;
+
+
+            }
+
+            //titano staking earning calculation && Swap back to ust when it is possible
+            gainedValuePerCycle = Constants.RATE_GAIN_TITANO_APY * lastTitanoStakedValue/(100*365*24*3);
+            lastTitanoStakedValue = lastTitanoStakedValue + gainedValuePerCycle;
+            lastTitanoStakedValueBeforePuncture = lastTitanoStakedValueBeforePuncture + gainedValuePerCycle/100;
+
+            tmpValueInTokenToBeDistributed = lastTitanoStakedValue - lastTitanoStakedValueBeforePuncture;
+            allFees = tmpValueInTokenToBeDistributed * Constants.RATE_TITANO_RATE_SELL/100;
+            tmpValueInTokenToBeDistributed = tmpValueInTokenToBeDistributed - allFees;
+            tmpValueToBeDistributedInUSD = tmpValueInTokenToBeDistributed * sellingTITANOValue;
+            bridgeFees = Math.max(Constants.MIN_FIXED_BRIDGE_FEE,tmpValueInTokenToBeDistributed*RATE_VARIABLE_BRIDGE_FEE/100);
+            tmpValueInUSTToBeDistributed = tmpValueToBeDistributedInUSD - Constants.FIXED_FEE_TRANSACTIONS_UST - bridgeFees; //can be staked directly in ust
+            if(tmpValueInUSTToBeDistributed > Constants.MIN_VALUE_CAN_BE_SWAPPED_FROM_TITANO_OR_LIBERO_TO_UST_IN_USD)
+            {
+                lastTitanoStakedValue = lastTitanoStakedValue - tmpValueInTokenToBeDistributed - allFees;
+                lastTitanoStakedValueBeforePuncture = lastTitanoStakedValueBeforePuncture - tmpValueInTokenToBeDistributed - allFees;
+
+                lastUSTStakedValue = lastUSTStakedValue + tmpValueInUSTToBeDistributed;
+                lastUSTStakedValueBeforePuncture = lastUSTStakedValueBeforePuncture + tmpValueInUSTToBeDistributed;
+            }
+
+            //libero staking earning calculation && Swap Back when it is possible
+            gainedValuePerCycle = Constants.RATE_GAIN_Libero_APY * lastTitanoStakedValue/(100*365*24*3);
+            lastLiberoStakedValue = lastLiberoStakedValue + gainedValuePerCycle;
+            lastLiberoStakedValueBeforePuncture = lastLiberoStakedValueBeforePuncture + gainedValuePerCycle/100;
+
+            tmpValueInTokenToBeDistributed = lastLiberoStakedValue - lastLiberoStakedValueBeforePuncture;
+            allFees = tmpValueInTokenToBeDistributed * Constants.RATE_LIBERO_SELL/100;
+            tmpValueInTokenToBeDistributed = tmpValueInTokenToBeDistributed - allFees;
+            tmpValueToBeDistributedInUSD = tmpValueInTokenToBeDistributed * sellingLiberoValue;
+            bridgeFees = Math.max(Constants.MIN_FIXED_BRIDGE_FEE,tmpValueInTokenToBeDistributed*RATE_VARIABLE_BRIDGE_FEE/100);
+            tmpValueInUSTToBeDistributed = tmpValueToBeDistributedInUSD - Constants.FIXED_FEE_TRANSACTIONS_UST - bridgeFees; //can be staked directly in ust
+            if(tmpValueInUSTToBeDistributed > Constants.MIN_VALUE_CAN_BE_SWAPPED_FROM_TITANO_OR_LIBERO_TO_UST_IN_USD)
+            {
+                lastLiberoStakedValue = lastLiberoStakedValue - tmpValueInTokenToBeDistributed - allFees;
+                lastLiberoStakedValueBeforePuncture = lastLiberoStakedValueBeforePuncture - tmpValueInTokenToBeDistributed - allFees;
+
+                lastUSTStakedValue = lastUSTStakedValue + tmpValueInUSTToBeDistributed;
+                lastUSTStakedValueBeforePuncture = lastUSTStakedValueBeforePuncture + tmpValueInUSTToBeDistributed;
+            }
+
+
+            if(logger.isDebugEnabled())
+            {
+                logger.debug("Current UST Staked value is ["+lastUSTStakedValue+" ust($)]");
+                logger.debug("Current TITANO Staked is ["+lastTitanoStakedValue+" titano]");
+                logger.debug("Current LIBERO Deposit is ["+lastLiberoStakedValue+" libero]");
+            }
+
+
+
+            tmpNumberOf20min--;
         }
+        resultValueInUSD = lastUSTStakedValue +
+                   lastLiberoStakedValue * sellingLiberoValue - Constants.RATE_LIBERO_SELL * lastLiberoStakedValue * sellingLiberoValue/100
+                + lastTitanoStakedValue * sellingTITANOValue - Constants.RATE_TITANO_RATE_SELL * lastTitanoStakedValue * sellingTITANOValue;
     }
 
     private void initialization()

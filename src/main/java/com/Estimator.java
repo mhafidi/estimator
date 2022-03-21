@@ -43,32 +43,32 @@ public class Estimator
         this.sellingLiberoValue = sellingLiberoValue;
     }
 
-    public double computeGain()
+    public double computeGain(boolean hold)
     {
         initialization();
         switch (investType) {
             case safe:
-                safeCompoundCalculation();
+                safeCompoundCalculation(hold);
                 break;
             case aggressive:
-                aggressiveCompoundCalculation();
+                aggressiveCompoundCalculation(hold);
                 break;
             case moderate:
-                moderateCompoundCalculation();
+                moderateCompoundCalculation(hold);
                 break;
         }
 
         return resultValueInUSD;
     }
 
-    private void moderateCompoundCalculation() {
+    private void moderateCompoundCalculation(boolean hold) {
     }
 
-    private void aggressiveCompoundCalculation() {
+    private void aggressiveCompoundCalculation(boolean hold) {
 
     }
 
-    private void safeCompoundCalculation()
+    private void safeCompoundCalculation(boolean hold)
     {
         int tmpNumberOf20min = numberOfDays * 72;
         double lastUSTStakedValue = initialValueInvestmentInUST - Constants.FIXED_FEE_TRANSACTIONS_UST;
@@ -81,6 +81,7 @@ public class Estimator
         double bridgeFees,allFees;
 
         int numberOfTimesSoldTokens=0;
+        int numberOfTimesBuyingTokens=0;
         double lastUSTStakedValueBeforePuncture = lastUSTStakedValue;
         while(tmpNumberOf20min > 0)
         {
@@ -96,9 +97,10 @@ public class Estimator
             tmpValueToBeDistributedInUSD = tmpValueToBeDistributedInUSD - bridgeFees;
             allFees = bridgeFees + Constants.FIXED_FEE_TRANSACTIONS_UST;
 
-            if( tmpValueToBeDistributedInUSD > MIN_VALUE_CAN_BE_SWAPPED_FROM_UST_TO_TITANO_AND_LIBERO)
+            if( tmpValueToBeDistributedInUSD > MIN_VALUE_CAN_BE_SWAPPED_FROM_UST_TO_TITANO_AND_LIBERO )
             {
 
+                numberOfTimesBuyingTokens++;
                 lastUSTStakedValue = lastUSTStakedValue - tmpValueToBeDistributedInUSD -allFees;
                 lastUSTStakedValueBeforePuncture = lastUSTStakedValue;
 
@@ -127,7 +129,7 @@ public class Estimator
             tmpValueToBeDistributedInUSD = tmpValueInTokenToBeDistributed * sellingTITANOValue;
             bridgeFees = Math.max(Constants.MIN_FIXED_BRIDGE_FEE,tmpValueInTokenToBeDistributed*RATE_VARIABLE_BRIDGE_FEE/100);
             tmpValueInUSTToBeDistributed = tmpValueToBeDistributedInUSD - Constants.FIXED_FEE_TRANSACTIONS_UST - bridgeFees; //can be staked directly in ust
-            if(tmpValueInUSTToBeDistributed > Constants.MIN_VALUE_CAN_BE_SWAPPED_FROM_TITANO_OR_LIBERO_TO_UST_IN_USD)
+            if(tmpValueInUSTToBeDistributed > Constants.MIN_VALUE_CAN_BE_SWAPPED_FROM_TITANO_OR_LIBERO_TO_UST_IN_USD && !hold)
             {
                 lastTitanoStakedValue = lastTitanoStakedValue - tmpValueInTokenToBeDistributed - allFees;
                 lastTitanoStakedValueBeforePuncture = lastTitanoStakedValue;
@@ -148,7 +150,7 @@ public class Estimator
             tmpValueToBeDistributedInUSD = tmpValueInTokenToBeDistributed * sellingLiberoValue;
             bridgeFees = Math.max(Constants.MIN_FIXED_BRIDGE_FEE,tmpValueInTokenToBeDistributed*RATE_VARIABLE_BRIDGE_FEE/100);
             tmpValueInUSTToBeDistributed = tmpValueToBeDistributedInUSD - Constants.FIXED_FEE_TRANSACTIONS_UST - bridgeFees; //can be staked directly in ust
-            if(tmpValueInUSTToBeDistributed > Constants.MIN_VALUE_CAN_BE_SWAPPED_FROM_TITANO_OR_LIBERO_TO_UST_IN_USD)
+            if(tmpValueInUSTToBeDistributed > Constants.MIN_VALUE_CAN_BE_SWAPPED_FROM_TITANO_OR_LIBERO_TO_UST_IN_USD && !hold)
             {
                 lastLiberoStakedValue = lastLiberoStakedValue - tmpValueInTokenToBeDistributed - allFees;
                 lastLiberoStakedValueBeforePuncture = lastLiberoStakedValue;
@@ -174,11 +176,9 @@ public class Estimator
         System.out.println("Number of TITANO: "+ lastTitanoStakedValue);
         System.out.println("Number of Libero: "+ lastLiberoStakedValue);
         System.out.println("Number of times tokens sold: "+numberOfTimesSoldTokens);
+        System.out.println("Number of times tokens Bought: "+numberOfTimesBuyingTokens);
         resultValueInUSD = lastUSTStakedValue + lastTitanoStakedValue * sellingTITANOValue - Constants.RATE_TITANO_RATE_SELL * lastTitanoStakedValue * sellingTITANOValue/100
         +lastLiberoStakedValue * sellingLiberoValue - Constants.RATE_LIBERO_SELL * lastLiberoStakedValue * sellingLiberoValue/100;
-//        +
-//                   lastLiberoStakedValue * sellingLiberoValue - Constants.RATE_LIBERO_SELL * lastLiberoStakedValue * sellingLiberoValue/100
-//                + lastTitanoStakedValue * sellingTITANOValue - Constants.RATE_TITANO_RATE_SELL * lastTitanoStakedValue * sellingTITANOValue/100;
     }
 
     private void initialization()

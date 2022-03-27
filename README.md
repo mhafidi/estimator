@@ -1,6 +1,6 @@
 # estimator
 
-####In dev mode:
+### In dev mode:
 - checkout the code
 - clean and package
 
@@ -22,7 +22,7 @@ mvn spring-boot:start
 - In order to test "connect wallet" feature, you can use the script clientScript.sh 
 note in dev mode set the variable PORT to 8888
 
-###In production mode
+### In production mode
 
 you can import the docker image 
 ```

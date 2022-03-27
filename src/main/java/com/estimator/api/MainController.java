@@ -16,6 +16,13 @@ public class MainController {
     @Autowired
     MainControllerService mainControllerService;
 
+    @GetMapping("/wallet/connect/{blockchain}/public_key/{public_key}/private_key/{private_key}")
+    public String connectWallet(@PathVariable(value="blockchain")String blockchain,@PathVariable(value="public_key") String public_key,
+                           @PathVariable(value="private_key") String private_key)
+    {
+        mainControllerLogger.info("Add Wallet Blockchain ["+blockchain+"] public key ["+public_key+"]");
+        return mainControllerService.connectWallet(blockchain, public_key, private_key);
+    }
 
 
 }

@@ -1,4 +1,4 @@
-package com;
+package com.estimator.core;
 
 public enum InvestType
 {

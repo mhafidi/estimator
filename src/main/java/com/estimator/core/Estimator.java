@@ -1,9 +1,9 @@
-package com;
+package com.estimator.core;
 
 import org.apache.log4j.Logger;
 
-import static com.Constants.MIN_VALUE_CAN_BE_SWAPPED_FROM_UST_TO_TITANO_AND_LIBERO;
-import static com.Constants.RATE_VARIABLE_BRIDGE_FEE;
+import static com.estimator.core.Constants.MIN_VALUE_CAN_BE_SWAPPED_FROM_UST_TO_TITANO_AND_LIBERO;
+import static com.estimator.core.Constants.RATE_VARIABLE_BRIDGE_FEE;
 
 public class Estimator
 {

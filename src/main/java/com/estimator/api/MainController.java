@@ -24,5 +24,12 @@ public class MainController {
         return mainControllerService.connectWallet(blockchain, public_key, private_key);
     }
 
+    @GetMapping("/trading/start/{strategy}")
+    public String startStart(@PathVariable(value="strategy")String strategy)
+    {
+        mainControllerLogger.info("Trading ["+strategy+"] strategy");
+        return mainControllerService.autoStrategy(strategy);
+    }
+
 
 }

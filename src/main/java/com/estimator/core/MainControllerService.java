@@ -31,4 +31,9 @@ public class MainControllerService
         }
         return response;
     }
+
+    public String autoStrategy(String strategy)
+    {
+        return null;
+    }
 }

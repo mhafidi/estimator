@@ -20,8 +20,20 @@ public class MainControllerService
 
     public String connectWallet(String blockchain,String publicKey,String privateKey)
     {
-        String str=iRestService.connectWallet(blockchain, publicKey, privateKey);
-        logger.info(str);
-        return str;
+        String response;
+        try {
+            response = iRestService.connectWallet(blockchain, publicKey, privateKey);
+            logger.info(response);
+        }
+        catch (Exception e)
+        {
+            response="Internal Error occurred: DEFI Communication service is unreachable";
+        }
+        return response;
+    }
+
+    public String autoStrategy(String strategy)
+    {
+        return null;
     }
 }
